@@ -3,7 +3,12 @@ import {
   signupQuery,
   emailExistsQuery,
   user,
-  TokenSave,
+  tokenSave,
+  refreshTokenSave,
+  fetchRefreshToken,
+  userTokenRemove,
+  userRefreshTokenRemove,
+  userLoginStatusUpdate,
 } from "../models/user.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
@@ -23,7 +28,9 @@ const login = async (req, res) => {
         if (token.code === 404) {
           res.status(token.code).send({ error: token.error });
         } else {
-          res.status(200).send({ message: token.message });
+          res
+            .status(200)
+            .send({ message: token.message, refreshtoken: token.refreshtoken });
         }
       }
     }
@@ -39,8 +46,13 @@ const verlfyPassword = async (password, data) => {
       return { code: 404, error: "your email and password is wrong" };
     } else {
       const createJwt = await jwtToken(data);
+
       if (createJwt.code == 200) {
-        return { code: createJwt.code, message: createJwt.message };
+        return {
+          code: createJwt.code,
+          message: createJwt.message,
+          refreshtoken: createJwt.refreshtoken,
+        };
       } else {
         return { code: createJwt.code, error: createJwt.err };
       }
@@ -52,15 +64,28 @@ const verlfyPassword = async (password, data) => {
 const jwtToken = async (data) => {
   try {
     const privateKey = process.env.JWT_KEY;
-    const { id, firstname, lastname, user_status } = data[0];
-    const user = { id, firstname, lastname, user_status };
-    const token = jwt.sign({ user }, privateKey);
-    if (token) {
-      const saveToken = [token, id];
-      const result = await TokenSave(saveToken);
-      const lastIndex = result.rows[0].token.length - 1;
-      const latestToken = result.rows[0].token[lastIndex];
-      return { code: 200, message: latestToken };
+    const { id, first_name, last_name, user_status } = data[0];
+    const user = { id, first_name, last_name, user_status };
+    const createtoken = jwt.sign({ user }, privateKey, { expiresIn: "2h" });
+    await userLoginStatusUpdate([true, id]);
+    const createRefreshtoken = jwt.sign({ user }, privateKey);
+    if (createtoken && createRefreshtoken) {
+      const saveToken = [createtoken, id];
+      const saveRefreshToken = [createRefreshtoken, id];
+      const token = await tokenSave(saveToken);
+      const refreshtoken = await refreshTokenSave(saveRefreshToken);
+      const lastIndexToken = token.rows[0].token.length - 1;
+      const latestToken = token.rows[0].token[lastIndexToken];
+
+      const lastIndexRefreshToken =
+        refreshtoken.rows[0].refresh_token.length - 1;
+      const latestRefreshToken =
+        refreshtoken.rows[0].refresh_token[lastIndexRefreshToken];
+      return {
+        code: 200,
+        message: latestToken,
+        refreshtoken: latestRefreshToken,
+      };
     } else {
       return { code: 404, error: "server problem" };
     }
@@ -93,4 +118,50 @@ const signup = async (req, res) => {
     console.error("signup", error);
   }
 };
-export { signup, login };
+const logout = async (req, res) => {
+  try {
+    const refreshToken = req.body;
+    let token = req.headers["authorizated"];
+    token = token.split(" ")[1];
+    const decoded = jwt.decode(token);
+    const userId = decoded.user.id;
+    await userTokenRemove([token, userId]);
+    await userRefreshTokenRemove([refreshToken.refresh_token, userId]);
+    console.log(refreshToken.refresh_token);
+    const status = await userLoginStatusUpdate([false, userId]);
+    res.status(200).send(status.rows[0]);
+
+    console.log(user);
+  } catch (error) {
+    console.log("logout", error);
+  }
+};
+const accessToken = async (req, res) => {
+  try {
+    const privateKey = process.env.JWT_KEY;
+    let refreshToken = req.headers["authorizated"];
+    refreshToken = refreshToken.split(" ")[1];
+    // console.log("refreshToken", refreshToken);
+    const decoded = jwt.decode(refreshToken);
+    const { id, first_name, last_name, user_status } = decoded.user;
+
+    const getRefreshtoken = await fetchRefreshToken([id]);
+    const refreshTokenArray = getRefreshtoken.rows[0].refresh_token;
+    const findRefreshtoken = refreshTokenArray.find(
+      (element) => element == refreshToken
+    );
+    if (findRefreshtoken === undefined) {
+      res.status(404).send({ error: "Provid Refresh Token" });
+    } else {
+      const user = { id, first_name, last_name, user_status };
+      const createtoken = jwt.sign({ user }, privateKey, { expiresIn: "2h" });
+      const token = await tokenSave([createtoken, id]);
+      const lastIndexToken = token.rows[0].token.length - 1;
+      const latestToken = token.rows[0].token[lastIndexToken];
+      res.status(200).send({ message: latestToken });
+    }
+  } catch (error) {
+    console.log("refreshtoken", error);
+  }
+};
+export { signup, login, logout, accessToken };

@@ -28,7 +28,7 @@ const user = async (data) => {
     console.log(error);
   }
 };
-const TokenSave = async (data) => {
+const tokenSave = async (data) => {
   try {
     const tokenSaveQuery = `UPDATE users SET login_status=true,token = ARRAY_APPEND("token", $1 ) WHERE "id" = $2  RETURNING token`;
     return await pool.query(tokenSaveQuery, data);
@@ -36,4 +36,72 @@ const TokenSave = async (data) => {
     console.log(error);
   }
 };
-export { signupQuery, emailExistsQuery, user, TokenSave };
+const refreshTokenSave = async (data) => {
+  try {
+    const tokenSaveQuery = `UPDATE users SET login_status=true,refresh_token = ARRAY_APPEND("refresh_token", $1 ) WHERE "id" = $2  RETURNING refresh_token`;
+    return await pool.query(tokenSaveQuery, data);
+  } catch (error) {
+    console.log(error);
+  }
+};
+const tokenRemove = async (data) => {
+  try {
+    const tokenQuery = `UPDATE users SET token = array_remove(token , $1 ) WHERE "id" = $2`;
+    return await pool.query(tokenQuery, data);
+  } catch (error) {
+    console.log(error);
+  }
+};
+const refreshTokenRemove = async (data) => {
+  try {
+    const refreshToken = `UPDATE users SET refresh_token = array_remove(refresh_token , $1 ) WHERE "id" = $2`;
+    return await pool.query(refreshToken, data);
+  } catch (error) {
+    console.log(error);
+  }
+};
+const fetchRefreshToken = async (data) => {
+  try {
+    const getRefreshToken = `SELECT refresh_token FROM users WHERE "id" = $1 `;
+    return await pool.query(getRefreshToken, data);
+  } catch (error) {
+    console.log("refreshToken", error);
+  }
+};
+const userTokenRemove = async (data) => {
+  try {
+    const tokenRemoveQuery = `UPDATE users SET token = array_remove(token , $1 ) WHERE "id" = $2`;
+    return await pool.query(tokenRemoveQuery, data);
+  } catch (error) {
+    console.log(error);
+  }
+};
+const userRefreshTokenRemove = async (data) => {
+  try {
+    const refreshTokenRemoveQuery = `UPDATE users SET refresh_token = array_remove(refresh_token , $1 ) WHERE "id" = $2`;
+    return await pool.query(refreshTokenRemoveQuery, data);
+  } catch (error) {
+    console.log(error);
+  }
+};
+const userLoginStatusUpdate = async (data) => {
+  try {
+    const LoginStatusQuery = `UPDATE users SET login_status = $1 WHERE id = $2  RETURNING login_status`;
+    return await pool.query(LoginStatusQuery, data);
+  } catch (error) {
+    console.log(error);
+  }
+};
+export {
+  signupQuery,
+  emailExistsQuery,
+  user,
+  tokenSave,
+  refreshTokenSave,
+  tokenRemove,
+  refreshTokenRemove,
+  fetchRefreshToken,
+  userTokenRemove,
+  userRefreshTokenRemove,
+  userLoginStatusUpdate,
+};

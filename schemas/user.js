@@ -13,6 +13,7 @@ export const userTable = async () => {
                 user_status TEXT NOT NULL,
                 gender Text NOT NULL,
                 token TEXT[],
+                refresh_token TEXT[],
                 created_at TIMESTAMP DEFAULT NOW()
             ) 
         `;
