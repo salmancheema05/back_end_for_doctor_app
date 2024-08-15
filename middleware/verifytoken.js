@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import { tokenRemove } from "../models/user.js";
 dotenv.config();
 
-const verifyToken = (req, res, next) => {
+const verifyUserToken = (req, res, next) => {
   const tokenKey = process.env.JWT_KEY;
   let token = req.headers["authorizated"];
   if (!token) {
@@ -22,4 +22,4 @@ const verifyToken = (req, res, next) => {
     });
   }
 };
-export { verifyToken };
+export { verifyUserToken };
