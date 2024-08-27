@@ -86,6 +86,7 @@ const userRefreshTokenRemove = async (data) => {
 };
 const userLoginStatusUpdate = async (data) => {
   try {
+    console.log("user status update", data);
     const LoginStatusQuery = `UPDATE users SET login_status = $1 WHERE id = $2  RETURNING login_status`;
     return await pool.query(LoginStatusQuery, data);
   } catch (error) {

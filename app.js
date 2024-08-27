@@ -1,7 +1,8 @@
 import express from "express";
 import { connectdb } from "./connections/database.js";
 import { userTable } from "./schemas/user.js";
-// import createtokenTable from "./schemas/token.js";
+import { departmentTable } from "./schemas/departments.js";
+import creatDeptAsignsToDoctorTable from "./schemas/deptasignstodoctor.js";
 import route from "./routes.js";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -16,7 +17,8 @@ app.get("/", (req, res) => {
   res.send("Hello World");
 });
 userTable();
-// createtokenTable();
+departmentTable();
+creatDeptAsignsToDoctorTable();
 connectdb();
 app.listen(port, host, () => {
   console.log("server is running on " + host + ":" + port);

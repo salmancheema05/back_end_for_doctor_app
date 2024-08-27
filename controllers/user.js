@@ -65,13 +65,16 @@ const jwtToken = async (data) => {
   try {
     const privateKey = process.env.JWT_KEY;
     const { id, first_name, last_name, user_status } = data[0];
+
     const user = { id, first_name, last_name, user_status };
     const createtoken = jwt.sign({ user }, privateKey, { expiresIn: "2h" });
     await userLoginStatusUpdate([true, id]);
+
     const createRefreshtoken = jwt.sign({ user }, privateKey);
     if (createtoken && createRefreshtoken) {
       const saveToken = [createtoken, id];
       const saveRefreshToken = [createRefreshtoken, id];
+
       const token = await tokenSave(saveToken);
       const refreshtoken = await refreshTokenSave(saveRefreshToken);
       const lastIndexToken = token.rows[0].token.length - 1;
@@ -81,6 +84,7 @@ const jwtToken = async (data) => {
         refreshtoken.rows[0].refresh_token.length - 1;
       const latestRefreshToken =
         refreshtoken.rows[0].refresh_token[lastIndexRefreshToken];
+
       return {
         code: 200,
         message: latestToken,
@@ -127,11 +131,8 @@ const logout = async (req, res) => {
     const userId = decoded.user.id;
     await userTokenRemove([token, userId]);
     await userRefreshTokenRemove([refreshToken.refresh_token, userId]);
-    console.log(refreshToken.refresh_token);
     const status = await userLoginStatusUpdate([false, userId]);
     res.status(200).send(status.rows[0]);
-
-    console.log(user);
   } catch (error) {
     console.log("logout", error);
   }
@@ -141,7 +142,6 @@ const accessToken = async (req, res) => {
     const privateKey = process.env.JWT_KEY;
     let refreshToken = req.headers["authorizated"];
     refreshToken = refreshToken.split(" ")[1];
-    // console.log("refreshToken", refreshToken);
     const decoded = jwt.decode(refreshToken);
     const { id, first_name, last_name, user_status } = decoded.user;
 
