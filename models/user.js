@@ -4,7 +4,7 @@ const signupQuery = async (data) => {
   try {
     const insertQuery = `INSERT INTO users (
         first_name, last_name, email,password,login_status,user_status,gender) 
-        VALUES ($1,$2,$3,$4,$5,$6,$7)`;
+        VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`;
     return await pool.query(insertQuery, data);
   } catch (error) {
     console.error("signup", error);
@@ -86,9 +86,16 @@ const userRefreshTokenRemove = async (data) => {
 };
 const userLoginStatusUpdate = async (data) => {
   try {
-    console.log("user status update", data);
     const LoginStatusQuery = `UPDATE users SET login_status = $1 WHERE id = $2  RETURNING login_status`;
     return await pool.query(LoginStatusQuery, data);
+  } catch (error) {
+    console.log(error);
+  }
+};
+const userGenderAndUserStutausUpdate = async (data) => {
+  try {
+    const updateQuery = `UPDATE users SET gender= $1,user_status=$2 WHERE id = $3  RETURNING *`;
+    return await pool.query(updateQuery, data);
   } catch (error) {
     console.log(error);
   }
@@ -105,4 +112,5 @@ export {
   userTokenRemove,
   userRefreshTokenRemove,
   userLoginStatusUpdate,
+  userGenderAndUserStutausUpdate,
 };
