@@ -8,7 +8,7 @@ const pool = new Pool({
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   ssl: {
-    rejectUnauthorized: true, // Use this in development, set to true in production
+    rejectUnauthorized: false, // Use this in development, set to true in production
   },
 });
 const connectdb = () => {
